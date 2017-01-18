@@ -1,0 +1,26 @@
+<!-- ./partials/header.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>TinyApp</title>
+</head>
+<body>
+  <% include partials/_header %>
+  <table>
+  <% for (url in locals.urls) { %>
+      <p> This is the full Url: <a href="<%= locals.urls[url] %>"><%=locals.urls[url]%></a> </p>
+      <p> This is the shortened version of the same Url: <a href="<%=(url)%>"><%= (url) %></a> </p>
+        <form method="POST" action="/urls/<%=url%>/delete">
+          <div><span><b>Use this button to delete the link from the database ---></b>
+          <input type="submit" value="Delete"</input></span></div>
+        </form>
+        <form method="get" action="/urls/<%=url%>">
+          <div><span><b>Use this button to edit the link from the database ---></b>
+          <button type="submit">Edit</button></span></div>
+        </form>
+  </table>
+  <% } %>
+  <p><a href="www.DylansLinkShortener.com">Dylan's Link Shortener Website</a></p>
+</body>
+</html>
