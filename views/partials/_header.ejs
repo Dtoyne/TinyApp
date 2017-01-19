@@ -1,19 +1,2 @@
-<!-- views/partials/_header.ejs -->
-
-<header>TinyApp</header>
-<% if (userId) { %>
-  Email: <%= email %>
-  <form action="/urls" method="GET">
-    <input type="submit" value="My Links">
-  </form>
-  <form action="/logout" method="POST">
-    <input type="submit" value="Sign Out">
-  </form>
-<% } else { %>
-  <form action="/login" method="POST">
-    <input type="submit" value="Sign In">
-  </form>
-  <form action="/register">
-    <input type="submit" value="Register">
-  </form>
-<% } %>
+<!-- views/partials/header.ejs -->
+  <h1 align="center">Dylan's Link Shortener</h1>
