@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+  <%= code %> : <%= message %>
+  <% if (link) { %>
+  <form action="/<%= link %>" method="GET">
+    <button type="submit">Sign In</button>
+  </form>
+  <% } %>
+</body>
+</html>
