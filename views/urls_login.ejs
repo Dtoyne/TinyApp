@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+<header>Login Page</header>
 <body>
-  <form action="/login" method="POST">
-    <label for="email">Enter Your Email: </label>
-    <input id="email" type="email" name="username">
-    <label for="password">Enter Your Password: </label>
-    <input id="password" type="password" name="password">
-    <button type="submit">Sign In</button>
+  <form action="/login" method="POST" style="margin:50px;">
+      <label for="username">Please Enter Your Username:</label>
+      <input id="username" type="text" name="username" placeholder="Type username here" style="width: 300px">
+      <input id="password" type="password" name="password" placeholder="*******" style="width: 100px">
+      <input type="submit" value="Login">
   </form>
 </body>
 </html>

@@ -1,106 +1,144 @@
+'use strict';
+
 const express = require("express");
 const app = express();
-const PORT = process.env.PORT || 8080; // default port 8080
+const PORT = process.env.PORT || 8080; // default port 80      <input type="submit" value="Sign In">
+const _ = require('lodash');
+const bcrypt = require('bcrypt');
+const cookieSession = require('cookie-session');
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser())
+
+app.use(cookieSession({keys:['key1','key2']}));
+app.use(bodyParser.urlencoded({extended:false}));
 app.set("view engine", "ejs");
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
+let users = {};
+let urlGeneral = {};
 
-// Add key-value pair into object:
-// Redirect to /urls/shortURL
+function generateRandomString() {
+  var input = "";
+  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i=0; i <= 6; i++) {
+    input += chars.charAt(Math.floor(Math.random() * chars.length));
+  };
+  return input;
+}
 
-// Accepts data from input form and saves and then redirects:
+// Gets:
+
 app.get("/", (req, res) => {
-  res.redirect("/urls")
+  res.render("urls_main");
 });
-
-app.post("/login", (req, res) => {
-  let cookie = res.cookie('username', req.body.username);
-  res.redirect('/urls')
-});
-
-app.get("/login", (req, res) => {
-  res.render("urls_login")
-});
-
-app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect('/urls')
-});
-
 
 app.get("/urls", (req, res) => {
-  let locals = {
-    urls: urlDatabase,
-    username: req.cookies['username']
-  }
-  res.render("urls_index", locals);
+  var id = (req.session.user_id);
+  let templateVars = {
+    urls: users[req.session.user_id].urlDatabase,
+    email: users[req.session.user_id].email
+  };
+    res.render("urls_index", templateVars);
 });
-
-app.post("/urls/create", (req, res) => {
-  const randomPost = generateRandomString();
-  urlDatabase[randomPost] = req.body.longURL;
-  res.redirect(`/urls`);
-});
-
-// Render shows the form to input data:
 
 app.get("/urls/new", (req, res) => {
-  let login = {username: req.cookies['username']
-  }
-  res.render("urls_new", login);
-})
-
-app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  let templateVars = {
+     shortURL: req.params.id,
+     email: users[req.session.user_id].email
+   };
+     res.render("urls_new",templateVars);
 });
 
-
-// Implement a Delete operation to remove existing URLS from database:
-
-app.post('/urls/:id/delete', (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect('/urls');
-});
-
-app.post('/urls/:id', (req, res) => {
-  urlDatabase[req.params.id] = req.body.update_url;
-  res.redirect('/urls')
+app.get("/login/",(req, res) => {
+  res.render("urls_login");
 })
 
-// Redirects to longURL (Took us to Apple)
+app.get("/urls/:id", (req, res) => {
+  let templateVars = {
+    shortURL: req.params.id,
+    email: users[req.session.user_id].email,
+  };
+  res.render("urls_show", templateVars);
+});
+
+app.get("/register", (req, res) => {
+  res.render("urls_register");
+});
+
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
 
 app.get("/u/:shortURL", (req, res) => {
-  let longURL = urlDatabase[req.params.shortURL];
+  let short = req.params.shortURL;
+  let longURL = urlGeneral[short];
   res.redirect(longURL);
 });
 
+// Posts:
 
-app.get("/urls/:id", (req, res) => {
-    let locals = { shortURL: req.params.id,
-                   longURL: urlDatabase[req.params.id],
-                   username: req.cookies['username']
-                 };
-  res.render("urls_show", locals);
+app.post("/login/", (req, res) => {
+  const email = req.body.username;
+  const password = req.body.password;
+  const user = _.find(users, {'email': email});
+  if (user) {
+    if (bcrypt.compareSync(password, user.password)){
+        req.session.user_id = user.id
+        return res.redirect("/urls");
+    } else {
+      res.status(403).send({error: "Incorrect Password"});
+    }
+    } else {
+     res.status(403).send({error: "User Not Found"});
+  }
+  req.session.user_id = user.id;
+  res.redirect("/url");
 });
 
+app.post("/urls/:id/delete", (req, res) => {
+  delete users[req.session.user_id].urlDatabase[req.params.id];
+  delete urlGeneral[req.params.id];
+  res.redirect('/urls/');
+});
+
+app.post("/urls/:id/update", (req, res) => {
+  users[req.session.user_id].urlDatabase[req.params.id] = req.body.newlongURL;
+  urlGeneral[req.params.id] = req.body.newlongURL;
+  res.redirect("/urls/");
+});
+
+app.post("/logout", (req, res) => {
+  req.session.user_id = null;
+  res.redirect("/");
+});
+
+app.post("/register", (req, res) => {
+  const user = _.find(users, {'email': req.body.email});
+  if (user) {
+    res.status(400).send({error: "User already registered"});
+    return res.redirect("/register");
+  }
+  const email = req.body.email;
+  const password = req.body.password;
+  const hashed_password = bcrypt.hashSync(password,10);
+  if (email.length == 0 || password.length == 0){
+      res.status(400).send({error: "empty field"});
+      return res.redirect("/register");
+  } else {
+     const userRandomID = generateRandomString();
+     users[userRandomID] = {id:userRandomID, email: req.body.email, password: hashed_password, urlDatabase: {}};
+     req.session.user_id = userRandomID;
+     res.redirect("/");
+   };
+})
+
+app.post("/urls", (req, res) => {
+  const rand = generateRandomString();
+  users[req.session.user_id].urlDatabase[rand] = req.body.longURL;
+  urlGeneral[rand] = req.body.longURL;
+  res.redirect(`/urls/${rand}`);
+});
+
+// Server:
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp listening on port ${PORT}!`);
 });
-
-function generateRandomString() {
-    const length = 6;
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-    for (let i = length; i > 0; --i) {
-      result += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return result;
-};

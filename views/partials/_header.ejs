@@ -1,2 +1,16 @@
-<!-- views/partials/header.ejs -->
-  <h1 align="center">Dylan's Link Shortener</h1>
+<title>TinyApp</title>
+ <h1 align="center">Dylan's Link Shortener</h1>
+  <% if(email){ %>
+    <p>User Signed In As:  <%= email %>
+      <form method="POST" action="/logout">
+      <button type ="logout">Logout</button>
+      </form>
+    </p>
+  <% } else{ %>
+    <a href ='/register'> Click Here To Register </a>
+    <form action="/login" method="POST" style="margin:50px;">
+      <label for="username">Please Enter Your username:</label>
+      <input id="username" type="text" name="username" placeholder="Type username here" style="width: 300px">
+      <input type="submit" value="Login">
+    </form>
+    <% } %>
