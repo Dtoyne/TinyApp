@@ -113,14 +113,14 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const user = _.find(users, {'email': req.body.email});
   if (user) {
-    res.status(400).send({error: "User already registered"});
+    res.status(400).send({error: "User Already Registered"});
     return res.redirect("/register");
   }
   const email = req.body.email;
   const password = req.body.password;
   const hashed_password = bcrypt.hashSync(password,10);
   if (email.length == 0 || password.length == 0){
-      res.status(400).send({error: "empty field"});
+      res.status(400).send({error: "Empty Field"});
       return res.redirect("/register");
   } else {
      const userRandomID = generateRandomString();
